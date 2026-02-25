@@ -22,7 +22,9 @@ Templates:
 
 ## Steps
 
-### 1. Validate template availability
+---
+
+### 0. Validate template availability
 
 Check that both template files exist.
 
@@ -34,7 +36,47 @@ If any template is missing:
 
 ---
 
+### 1. Optional Integrations (MCP)
+
+This project includes support for external integrations via MCP (Model Context Protocol).
+
+The following tools can be connected optionally:
+
+- [ ] Notion (User stories / documentation)
+- [ ] Jira (Issue management via Atlassian)
+- [ ] Figma (Design system / UI components)
+
+These integrations are not required.  
+If none are authenticated, the project will continue operating in manual mode without disruption.
+
+Authentication (per user):
+
+1. Open Claude Code in this repository.
+2. Run the command `/mcp`.
+3. For each integration you want to enable, click **Authenticate**.
+4. Complete the login process in your browser.
+
+Quick Verification:
+
+After authentication, test the connection:
+
+- Notion → “List my databases” or “Search pages containing ‘Spec’”
+- Jira → “Search issues assigned to me”
+- Figma → “List recent team files”
+
+If you choose not to connect any tools now, you may proceed with the workflow normally.
+
+If any MCP integration is authenticated, you may use it to gather relevant project context before asking questions in Step 2.
+
+- If Notion is connected, search for architecture, technical decisions, or existing specifications.
+- If Jira is connected, identify project keys or recurring issue patterns.
+- If Figma is connected, inspect the primary design system or UI constraints.
+
+Use this information to reduce redundant questions.
+
 ### 2. Collect project stack information
+
+Before asking questions, verify whether relevant information has already been retrieved from MCP integrations.
 
 Use the AskUserQuestion tool to gather the necessary stack details.
 
