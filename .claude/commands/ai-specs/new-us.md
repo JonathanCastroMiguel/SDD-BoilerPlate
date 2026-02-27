@@ -1,13 +1,13 @@
 ---
 name: "ai-specs: new-us"
-description: Start a new OpenSpecs change from Jira, Notion, or manual input. Enrich the user story before running opsx:new.
+description: Start from Jira, Notion, or manual input. Enrich the user story and optionally create an OpenSpecs change.
 category: Command
 tags: [ai-specs, opsx, enrich, mcp]
 ---
 
-Create a new OpenSpecs change by first capturing a User Story from Jira, Notion, or manual input.  
-Then enrich it using `ai-specs: enrich-us`.  
-Finally, execute `opsx:new` using the enriched story as the ONLY input.
+Create a new User Story from Jira, Notion, or manual input.  
+Enrich it using `ai-specs: enrich-us`.  
+Then optionally execute `opsx:new` using the enriched story as the ONLY input.
 
 ---
 
@@ -110,7 +110,30 @@ Rules:
 
 ---
 
-### 5. Start OpenSpecs Change
+### 5. Decide Next Action
+
+Ask the user:
+
+Do you want to:
+
+- Stop here (PO mode) and keep only the Enriched User Story
+- Continue and create an OpenSpecs change (run opsx:new)
+
+Rules:
+- If the user chooses "Stop here", end the command.
+- If the user chooses "Continue", proceed to Step 6.
+- If the user provides no explicit answer, default to Stop here.
+
+If stopping:
+- Inform the user they can later run:
+
+  opsx:new
+
+  and paste the Enriched User Story manually.
+
+---
+
+### 6. Start OpenSpecs Change (Delivery Mode)
 
 Execute:
 
@@ -126,10 +149,11 @@ Rules:
 
 ---
 
-### 6. Report
+### 7. Report
 
 Display:
 - Selected source
 - Confirmation that enrichment ran
-- Change name/path created by opsx:new
+- Whether OpenSpecs change was created
+- If created: change name/path
 - The next recommended action
