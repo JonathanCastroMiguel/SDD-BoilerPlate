@@ -1,6 +1,6 @@
 ---
 name: "ai-specs: Enrich US"
-description: Enrich a user story from Jira, Notion, or manual text. For Jira and Notion inputs, update the source by default unless the user opts out. If Figma references are present, enrich with design context and set design-linked: true.
+description: Enrich a user story from Jira, Notion, or manual text. For Jira and Notion inputs, update the source by default unless the user opts out. If Figma references are present, enforce structural design integration and set design-linked: true.
 category: Command
 tags: [ai-specs, enrich, user-story, mcp, figma]
 ---
@@ -76,8 +76,6 @@ Produce an implementation-ready document:
 
 # Enriched User Story
 
-The enriched story MUST include:
-
 design-linked: <true|false>
 source: <Jira|Notion|Manual>
 reference: <issue key/url or notion url/id or "N/A">
@@ -104,59 +102,83 @@ Rules:
 
 ### 4.1) Design-aware enrichment (Figma)
 
-If the input content (Notion/Jira/Manual/Base US) contains a "Design References" section or any Figma URL(s):
+If a section titled "## Design References" exists OR any Figma URL is detected:
 
 #### 4.1.A Detect Design References
-Look for a section like:
 
-## Design References
+Immediately set:
 
-Figma File:
-<url>
+design-linked: true
 
-Node(s):
-- <url with node-id=...>
-- ...
-
-Components:
-- <component name>
-- ...
-
-Parse:
-- Figma file URL (required when present)
-- Node URLs (preferred, most deterministic)
-- Component names (optional fallback)
-
-Set:
-- design-linked: true
+Extract:
+- Figma file URL
+- Node URLs (preferred, containing node-id)
+- Component names (optional)
 
 If no design references exist:
 - design-linked: false
-- Skip the rest of this step.
+- Skip this section entirely.
+
+---
 
 #### 4.1.B Inspect via Figma MCP (if authenticated)
-If Figma MCP is authenticated:
-- Inspect the referenced nodes/components using Figma MCP.
-- Retrieve minimum useful implementation detail:
-  - Node/component name(s)
-  - Component variants/states (if available)
-  - Key layout constraints / notes (as available)
+
+If Figma MCP is authenticated and Node URLs exist:
+
+For each referenced node:
+
+- Retrieve node metadata.
+- Extract:
+  - Node name
+  - Parent frame name
+  - Direct children names
+  - Auto-layout direction (vertical/horizontal/none)
+  - Component type (frame, instance, component)
+  - Variants (if component instance)
+  - Basic layout constraints (if available)
+
+Build structural summary:
+
+Layout Hierarchy:
+- <Parent Frame>
+  - <Child 1>
+  - <Child 2>
+  - <Child 3>
 
 If Figma MCP is NOT authenticated:
 - Do not fail.
-- Add a note indicating Figma is not authenticated.
+- Add note: "Figma MCP not authenticated — structural inspection skipped."
+
+---
 
 #### 4.1.C Add "Design Integration" section
-In the Enriched User Story, add:
+
+Append to the Enriched User Story:
 
 ## Design Integration
-- Figma File: <url or "N/A">
-- Nodes:
-  - <node url> (Name: <...>, Notes: <...>)
-- Components:
-  - <component name> (Variants/States: <...>)
-- Implementation Notes:
-  - <bullet points that connect design constraints to implementation>
+
+Figma File: <url>
+
+Referenced Nodes:
+- <Node Name> (node-id=...)
+  Parent: <Parent Frame>
+  Layout Direction: <vertical|horizontal|none>
+  Children:
+    - <Child 1>
+    - <Child 2>
+
+Component Variants:
+- <Component Name>
+  - <Variant 1>
+  - <Variant 2>
+
+Layout Contract (must be followed strictly):
+- Preserve hierarchy order exactly.
+- Do not flatten frame structure.
+- Maintain alignment and spacing relationships.
+- Respect component variant usage.
+- Do not approximate layout using arbitrary CSS.
+- The Figma structure is the source of truth.
 
 Never modify Figma content automatically.
 
