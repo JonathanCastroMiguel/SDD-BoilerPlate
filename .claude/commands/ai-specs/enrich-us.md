@@ -1,8 +1,8 @@
 ---
 name: "ai-specs: Enrich US"
-description: Enrich a user story from Jira, Notion, or manual text. For Jira and Notion inputs, update the source by default unless the user opts out.
+description: Enrich a user story from Jira, Notion, or manual text. For Jira and Notion inputs, update the source by default unless the user opts out. If Figma references are present, enrich with design context and set design-linked: true.
 category: Command
-tags: [ai-specs, enrich, user-story, mcp]
+tags: [ai-specs, enrich, user-story, mcp, figma]
 ---
 
 Enrich a User Story so a developer can execute autonomously.
@@ -72,25 +72,93 @@ Reference: <issue key/url or notion url/id or "N/A">
 
 ### 4) Enrich the User Story
 
-Produce:
+Produce an implementation-ready document:
 
 # Enriched User Story
 
-Sections:
-- Context
-- Goals / Non-goals
-- Functional Requirements
-- Acceptance Criteria
-- Data / Entities (if applicable)
-- API / Interfaces (if applicable)
-- Implementation Notes
-- Testing Plan
-- Non-Functional Requirements
-- Assumptions
-- Open Questions
-- Definition of Done
+The enriched story MUST include:
 
-The result must be implementation-ready.
+design-linked: <true|false>
+source: <Jira|Notion|Manual>
+reference: <issue key/url or notion url/id or "N/A">
+
+## Context
+## Goals / Non-goals
+## Functional Requirements
+## Acceptance Criteria
+## Data / Entities (if applicable)
+## API / Interfaces (if applicable)
+## Implementation Notes
+## Testing Plan
+## Non-Functional Requirements
+## Assumptions
+## Open Questions
+## Definition of Done
+
+Rules:
+- Keep it actionable and specific.
+- Do not invent tools/stack details unless already known via project context.
+- If there are contradictions or missing requirements, ask a short clarifying question.
+
+---
+
+### 4.1) Design-aware enrichment (Figma)
+
+If the input content (Notion/Jira/Manual/Base US) contains a "Design References" section or any Figma URL(s):
+
+#### 4.1.A Detect Design References
+Look for a section like:
+
+## Design References
+
+Figma File:
+<url>
+
+Node(s):
+- <url with node-id=...>
+- ...
+
+Components:
+- <component name>
+- ...
+
+Parse:
+- Figma file URL (required when present)
+- Node URLs (preferred, most deterministic)
+- Component names (optional fallback)
+
+Set:
+- design-linked: true
+
+If no design references exist:
+- design-linked: false
+- Skip the rest of this step.
+
+#### 4.1.B Inspect via Figma MCP (if authenticated)
+If Figma MCP is authenticated:
+- Inspect the referenced nodes/components using Figma MCP.
+- Retrieve minimum useful implementation detail:
+  - Node/component name(s)
+  - Component variants/states (if available)
+  - Key layout constraints / notes (as available)
+
+If Figma MCP is NOT authenticated:
+- Do not fail.
+- Add a note indicating Figma is not authenticated.
+
+#### 4.1.C Add "Design Integration" section
+In the Enriched User Story, add:
+
+## Design Integration
+- Figma File: <url or "N/A">
+- Nodes:
+  - <node url> (Name: <...>, Notes: <...>)
+- Components:
+  - <component name> (Variants/States: <...>)
+- Implementation Notes:
+  - <bullet points that connect design constraints to implementation>
+
+Never modify Figma content automatically.
 
 ---
 
@@ -140,5 +208,6 @@ Always return:
 2) Enriched User Story
 3) Summary line:
    - Source: Jira/Notion/Manual
+   - Design linked: true/false
    - Updated: yes/no/N/A
    - Status changed: yes/no/N/A
