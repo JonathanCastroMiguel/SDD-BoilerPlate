@@ -1,6 +1,6 @@
 ---
 name: "ai-specs: Enrich US"
-description: Enrich a user story from Jira, Notion, or manual text. For Jira and Notion inputs, update the source by default unless the user opts out. If Figma references are present, enforce structural design integration and set design-linked: true.
+description: Enrich a user story from Jira, Notion, or manual text. If Figma references are present, mark design-linked: true and defer structural extraction to apply phase.
 category: Command
 tags: [ai-specs, enrich, user-story, mcp, figma]
 ---
@@ -8,10 +8,10 @@ tags: [ai-specs, enrich, user-story, mcp, figma]
 Enrich a User Story so a developer can execute autonomously.
 
 Input ($ARGUMENTS) can be:
-- A Jira issue key or URL (e.g., PROJ-123)
+- A Jira issue key or URL
 - A Notion page URL or page id
-- A raw markdown/text user story
-- A "Base User Story" markdown block (recommended)
+- Raw markdown/text
+- A Base User Story block
 
 ---
 
@@ -19,20 +19,20 @@ Input ($ARGUMENTS) can be:
 
 ### 0) Validate input
 
-If $ARGUMENTS is empty or too vague, ask the user to provide one of:
+If empty or unclear, ask for:
 - Jira issue key/url
 - Notion page url/id
-- Raw user story text (or a Base User Story block)
+- Raw user story text
 
 ---
 
 ### 1) Identify input type
 
-Classify $ARGUMENTS as one of:
-- Jira reference
-- Notion reference
-- Base User Story block
-- Manual text
+Classify as:
+- Jira
+- Notion
+- Base User Story
+- Manual
 
 If ambiguous, ask one clarifying question.
 
@@ -41,26 +41,23 @@ If ambiguous, ask one clarifying question.
 ### 2) Retrieve source content
 
 #### Jira
-- Fetch title, description, acceptance criteria, relevant comments.
-- Construct a Base User Story block.
+- Fetch title, description, acceptance criteria.
+- Normalize into Base User Story block.
 
 #### Notion
-- Fetch page title and requirement-related blocks.
-- Construct a Base User Story block.
+- Fetch title and requirement-related blocks.
+- Normalize into Base User Story block.
 
-#### Base User Story / Manual
-- Use as source of truth.
-- If manual, convert into Base User Story format.
+#### Manual
+- Convert into Base User Story format.
 
 ---
 
-### 3) Ensure Base User Story block
-
-Ensure exactly one block:
+### 3) Ensure Base User Story format
 
 # Base User Story
 Source: <Jira|Notion|Manual>
-Reference: <issue key/url or notion url/id or "N/A">
+Reference: <url|key|N/A>
 
 ## Title
 ## Problem / Context
@@ -72,13 +69,13 @@ Reference: <issue key/url or notion url/id or "N/A">
 
 ### 4) Enrich the User Story
 
-Produce an implementation-ready document:
+Produce:
 
 # Enriched User Story
 
 design-linked: <true|false>
 source: <Jira|Notion|Manual>
-reference: <issue key/url or notion url/id or "N/A">
+reference: <url|key|N/A>
 
 ## Context
 ## Goals / Non-goals
@@ -94,142 +91,91 @@ reference: <issue key/url or notion url/id or "N/A">
 ## Definition of Done
 
 Rules:
-- Keep it actionable and specific.
-- Do not invent tools/stack details unless already known via project context.
-- If there are contradictions or missing requirements, ask a short clarifying question.
+- Be specific and implementation-ready.
+- Do not invent tech stack.
+- Ask clarification if needed.
 
 ---
 
-### 4.1) Design-aware enrichment (Figma)
+## 4.1) Design Reference Detection (Light Mode)
 
-If a section titled "## Design References" exists OR any Figma URL is detected:
+If the input contains:
 
-#### 4.1.A Detect Design References
+- A section titled "## Design References"
+OR
+- Any Figma URL
 
-Immediately set:
+Then:
 
-design-linked: true
-
-Extract:
-- Figma file URL
-- Node URLs (preferred, containing node-id)
-- Component names (optional)
-
-If no design references exist:
-- design-linked: false
-- Skip this section entirely.
-
----
-
-#### 4.1.B Inspect via Figma MCP (if authenticated)
-
-If Figma MCP is authenticated and Node URLs exist:
-
-For each referenced node:
-
-- Retrieve node metadata.
+- Set `design-linked: true`
 - Extract:
-  - Node name
-  - Parent frame name
-  - Direct children names
-  - Auto-layout direction (vertical/horizontal/none)
-  - Component type (frame, instance, component)
-  - Variants (if component instance)
-  - Basic layout constraints (if available)
+  - Figma File URL (if present)
+  - Node URL(s) with node-id
+  - Component names (if listed)
 
-Build structural summary:
+Do NOT:
+- Extract layout hierarchy
+- Extract spacing/padding
+- Freeze structure
+- Create Layout Contract
 
-Layout Hierarchy:
-- <Parent Frame>
-  - <Child 1>
-  - <Child 2>
-  - <Child 3>
-
-If Figma MCP is NOT authenticated:
-- Do not fail.
-- Add note: "Figma MCP not authenticated — structural inspection skipped."
+If no Figma references exist:
+- Set `design-linked: false`
 
 ---
 
-#### 4.1.C Add "Design Integration" section
+### 4.2) Add Design Reference Section (Light)
 
-Append to the Enriched User Story:
+If design-linked is true, append:
 
-## Design Integration
+## Design References
 
-Figma File: <url>
+Figma File:
+<url or inferred from node>
 
 Referenced Nodes:
-- <Node Name> (node-id=...)
-  Parent: <Parent Frame>
-  Layout Direction: <vertical|horizontal|none>
-  Children:
-    - <Child 1>
-    - <Child 2>
+- <node-url-1>
+- <node-url-2>
 
-Component Variants:
-- <Component Name>
-  - <Variant 1>
-  - <Variant 2>
-
-Layout Contract (must be followed strictly):
-- Preserve hierarchy order exactly.
-- Do not flatten frame structure.
-- Maintain alignment and spacing relationships.
-- Respect component variant usage.
-- Do not approximate layout using arbitrary CSS.
-- The Figma structure is the source of truth.
-
-Never modify Figma content automatically.
+Note:
+Design structure and layout must be retrieved directly from Figma MCP during the implementation phase (opsx:apply). No structural assumptions are frozen at enrichment time.
 
 ---
 
 ### 5) Source Update Behavior
 
-#### Jira inputs
-
-- Ask: "Update the Jira ticket with the enhanced version? (yes/no)"
-- Default behavior: update unless user says "no"
+#### Jira
+Ask:
+"Update the Jira ticket with the enhanced version? (yes/no)"
+Default: yes
 
 If updating:
-1) Append after original content.
-2) Use H2 headings: [original] and [enhanced].
-3) Keep formatting readable.
-4) If status is "To refine", move to "Pending refinement validation".
+- Append enhanced section
+- Move status from "To refine" → "Pending refinement validation" (if possible)
 
 ---
 
-#### Notion inputs
-
-- Ask: "Update the Notion page with the enhanced version? (yes/no)"
-- Default behavior: update unless user says "no"
+#### Notion
+Ask:
+"Update the Notion page with the enhanced version? (yes/no)"
+Default: yes
 
 If updating:
-1) Append enhanced content below original.
-2) Add section headings: [original] and [enhanced].
-3) Preserve existing formatting.
+- Append enhanced content
+- Move Status property to "Pending refinement validation" (if exists)
 
-Status update (safe mode):
-- If the page belongs to a database AND has a property named:
-  - Status
-  - State
-  - Workflow
-- Then move it to:
-  - "Pending refinement validation"
-  - or the closest matching value.
-- If no such property exists, do nothing.
-
-Never fail if status cannot be updated.
+Never fail if status transition not possible.
 
 ---
 
 ### 6) Output
 
 Always return:
-1) Base User Story block
+
+1) Base User Story
 2) Enriched User Story
 3) Summary line:
-   - Source: Jira/Notion/Manual
+   - Source: ...
    - Design linked: true/false
    - Updated: yes/no/N/A
    - Status changed: yes/no/N/A
