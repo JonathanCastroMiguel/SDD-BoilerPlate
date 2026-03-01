@@ -1,6 +1,6 @@
 ---
 name: "ai-specs: Enrich US"
-description: Enrich a user story from Jira, Notion, or manual text. Uses Notion scope properties (BE/FE/Design Linked) when available. Design structure is resolved at apply-time (Live Design Mode).
+description: Enrich a user story from Jira, Notion, or manual text. Deterministic scope + design metadata. Design structure is resolved at apply-time (Live Design Mode).
 category: Command
 tags: [ai-specs, enrich, user-story, mcp]
 ---
@@ -50,6 +50,7 @@ If ambiguous, ask one clarifying question.
   - Backend (BE)
   - Frontend (FE)
   - Design Linked
+- Extract any Figma URLs containing `node-id=`.
 - Normalize into Base User Story block.
 
 #### Manual
@@ -71,7 +72,7 @@ Reference: <url|key|N/A>
 
 ---
 
-### 4) Scope & Design Detection
+### 4) Deterministic Scope & Design Detection
 
 Initialize:
 
@@ -89,9 +90,9 @@ If Notion boolean properties exist:
 - scope.frontend = value of "Frontend (FE)"
 - design-linked = value of "Design Linked"
 
-Checkbox values always take priority over content inference.
+Checkbox values ALWAYS take priority over content inference.
 
-#### 4.2 Fallback inference (only if properties missing)
+#### 4.2 Fallback (only if properties missing)
 
 If Backend/Frontend properties are missing:
 
@@ -100,7 +101,7 @@ If Backend/Frontend properties are missing:
 
 If Design Linked property is missing:
 
-- If a section titled "## Design References" exists OR any Figma URL is present:
+- If Figma URLs with `node-id=` are found OR a `## Design References` section exists:
   - design-linked = true
 
 If both property and content exist and contradict:
@@ -108,9 +109,9 @@ If both property and content exist and contradict:
 
 ---
 
-### 5) Enrich the User Story
+### 5) Produce Enriched User Story (STRICT FORMAT)
 
-Produce:
+You MUST output the following header exactly in this structure:
 
 # Enriched User Story
 
@@ -123,44 +124,54 @@ scope:
 source: <Jira|Notion|Manual>
 reference: <url|key|N/A>
 
+---
+
+Then include:
+
 ## Context
 ## Goals / Non-goals
-## Functional Requirements
-## Acceptance Criteria
+## Backend Requirements (if scope.backend == true)
+## Frontend Requirements (if scope.frontend == true)
 ## Data / Entities (if applicable)
 ## API / Interfaces (if applicable)
-## Implementation Notes
-## Testing Plan
+## Acceptance Criteria
 ## Non-Functional Requirements
 ## Assumptions
 ## Open Questions
 ## Definition of Done
 
 Rules:
-- Be specific and implementation-ready.
-- Do not invent tech stack details.
-- Follow project standards where available.
-- Tests are NOT controlled by scope booleans — they are governed by project standards.
+
+- NEVER inline metadata like: `design-linked: true | scope: FE + BE`
+- NEVER collapse scope into text.
+- ALWAYS output the YAML-style block exactly as shown.
+- If scope.backend == false, omit Backend Requirements section.
+- If scope.frontend == false, omit Frontend Requirements section.
+- Tests are governed by project standards (do not use scope booleans for tests).
 
 ---
 
-### 6) Design References (Light Mode)
+### 6) Design References (Light Mode, Deterministic)
 
-If design-linked is true:
+If design-linked == true:
 
-Append:
+Append EXACTLY:
 
 ## Design References
 
 Figma File:
-<url if available>
+<main figma file url if available>
 
 Referenced Nodes:
-- <node-url-1>
-- <node-url-2>
+- <full node-id URL 1>
+- <full node-id URL 2>
 
-Note:
-Design structure and layout will be retrieved live during the implementation phase (opsx:apply) via Figma MCP. No structural assumptions are frozen at enrichment time.
+Rules:
+
+- ALWAYS include full URLs containing `node-id=`
+- DO NOT summarize nodes as "aside (1:3)" without the URL
+- DO NOT extract layout structure here
+- Layout will be resolved at `/opsx:apply` time via Figma MCP
 
 ---
 
