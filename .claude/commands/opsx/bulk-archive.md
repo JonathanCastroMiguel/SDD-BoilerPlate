@@ -127,7 +127,24 @@ This skill allows you to batch-archive changes, handling spec conflicts intellig
       mv openspec/changes/<name> openspec/changes/archive/YYYY-MM-DD-<name>
       ```
 
-   c. **Track outcome** for each change:
+   c. **Update Notion Status (MANDATORY)**
+
+      If the archive for this change was successful:
+
+      1) Locate the originating Notion page reference for this change.
+         - Prefer a `reference:` field in the Enriched User Story / spec artifacts that contains a Notion URL.
+         - If multiple references exist, use the one that matches the current change context.
+
+      2) Update the Notion page property **Status** to exactly:
+         `Done`
+
+      Rules:
+      - Only update status for successfully archived changes.
+      - Do NOT update status for skipped or failed changes.
+      - Only do this if the Notion reference exists AND the Status property is present.
+      - If the Notion update fails, record the error but continue processing remaining changes.
+
+   d. **Track outcome** for each change:
       - Success: archived successfully
       - Failed: error during archive (record error)
       - Skipped: user chose not to archive (if applicable)

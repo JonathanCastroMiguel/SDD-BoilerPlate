@@ -59,6 +59,14 @@ Reference: <issue key/url or notion url/id or "N/A">
 ## Acceptance Criteria (raw)
 - ...
 
+#### Design References
+
+Figma File: (URLs)
+
+Node(s): 
+- (URL)
+- ...
+
 ## Constraints / Notes
 - ...
 
@@ -94,6 +102,14 @@ Rules (MANDATORY):
 
 If Notion is not available, skip this step.
 
+Status update (MANDATORY):
+- After appending the canonical code block, update the Notion page property **Status** to exactly:
+  `Pending refinement validation`
+
+Rules:
+- Only do this if a Notion page reference exists and the property is present on the page/database.
+- Do not invent other status names.
+
 ---
 
 ### 6. Decide Next Action
@@ -112,6 +128,13 @@ If stopping:
 
 ### 7. Start OpenSpecs Change (Delivery Mode)
 If continuing, execute:
+
+Status update (MANDATORY):
+- Immediately BEFORE running `opsx:new`, update the Notion page property **Status** to exactly:
+  `In Progress`
+
+Rules:
+- Only do this if a Notion page reference exists and the property is present.
 
 opsx:new
 
