@@ -77,6 +77,27 @@ Initialize (defaults):
 - `designLinked = false`
 - `liveDesignEnabled = false`
 
+
+#### 4.1.1 Metadata Tolerance (MANDATORY)
+
+Apply MUST be resilient to non-strict upstream formatting.
+Perform strict parsing first. If strict parsing fails to yield values, apply tolerant parsing:
+
+Tolerant patterns to detect:
+1) Inline metadata line:
+   - `design-linked: true | source: Notion | scope: FE + BE`
+   Parse:
+   - designLinked from `design-linked:`
+   - scope.frontend=true if `scope:` contains `FE` or `frontend`
+   - scope.backend=true if `scope:` contains `BE` or `backend`
+
+2) Scope phrases anywhere:
+   - `scope: FE + BE`, `scope: BE`, `scope: FE`, `scope: frontend`, `scope: backend`
+
+Precedence:
+- If strict metadata exists, it ALWAYS wins.
+- If strict metadata missing, tolerant parsing may populate values.
+
 Rules:
 - If `scope.frontend == true` and `design-linked == true`:
   - `liveDesignEnabled = true`
@@ -100,6 +121,31 @@ Rules:
   - Pause and ask the user to provide at least one Figma node URL with `node-id`.
   - Do NOT implement frontend tasks until a node-id is available.
 - Do not assume design structure from prose alone.
+
+
+#### 4.2.1 Design Reference Tolerance (MANDATORY)
+
+If `## Design References` or `Referenced Nodes:` is missing OR yields zero node-id URLs,
+attempt safe reconstruction without inventing anything.
+
+Valid inputs for reconstruction:
+- Any base Figma design URL in context: `https://www.figma.com/design/<FILEKEY>/...`
+- Any node tokens found in text:
+  - `node-id=1:549`, `node-id=1-549`, `(1:549)`, `(1-549)`, `main (1:549): ...`
+
+Reconstruction steps:
+1) Identify base Figma design URL:
+   - Use the first `https://www.figma.com/design/<FILEKEY>/...` found.
+2) Extract node tokens:
+   - Accept both `1:549` and `1-549`, normalize `-` -> `:`
+3) Build node URLs:
+   - URL-encode `:` as `%3A` in query values
+   - `<base-url>?node-id=<ENCODED>`
+
+You MUST NOT guess:
+- FILEKEY
+- node tokens
+- missing nodes
 
 ---
 

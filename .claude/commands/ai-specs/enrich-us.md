@@ -126,7 +126,21 @@ reference: <url|key|N/A>
 
 ---
 
+
+Additional STRICTNESS rules:
+
+- Output booleans MUST be exactly `true` or `false` (lowercase).
+- The scope block MUST be exactly:
+  scope:
+    backend: <true|false>
+    frontend: <true|false>
+- The metadata block MUST appear near the top, immediately after `# Enriched User Story`.
+- NEVER inline metadata (e.g., `design-linked: true | source: Notion | scope: FE + BE`).
+- NEVER collapse scope into text.
+- If the story language is Spanish, content can be Spanish, but the metadata block MUST remain in this strict format.
+
 Then include:
+
 
 ## Context
 ## Goals / Non-goals
@@ -199,7 +213,32 @@ Never fail if status transition not possible.
 
 ---
 
-### 8) Output
+---
+
+### 8) Output Validation & Auto-Repair (MANDATORY)
+
+Before returning your final answer, validate that your output satisfies ALL of the following:
+
+1) Contains the strict metadata block (Step 5) with:
+   - `design-linked: true|false` on its own line
+   - `scope:` YAML block with `backend:` and `frontend:` booleans
+   - `source:` and `reference:`
+2) Does NOT contain inline metadata patterns like:
+   - `design-linked: true | source: ... | scope: ...`
+3) If `design-linked: true`, contains a `## Design References` section with:
+   - `Figma File:` URL (if available)
+   - `Referenced Nodes:` list
+   - Each node MUST be a FULL URL containing `node-id=...`
+
+If ANY validation fails:
+- You MUST re-write the Enriched User Story so it passes validation.
+- You MUST NOT ask the user for permission to reformat.
+- You MAY ask the user for missing inputs ONLY if required:
+  - If `design-linked: true` but you have zero node-id URLs anywhere in source, ask for at least one Figma node URL with `node-id=...`.
+  - Otherwise, repair formatting using only existing information.
+
+
+### 9) Output
 
 Always return:
 

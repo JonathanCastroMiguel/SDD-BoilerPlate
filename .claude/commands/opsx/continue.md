@@ -97,6 +97,46 @@ Rules:
 
 You MUST NOT invent Figma node-ids. If designLinked is true and no node-id URLs exist, note it and keep going (tasks can still be created, but apply may later ask for node-id).
 
+
+#### 4.1 Metadata Tolerance (MANDATORY)
+
+Downstream commands prefer strict metadata blocks, but continue MUST be resilient.
+In addition to strict parsing, also detect:
+
+1) Inline metadata lines, e.g.:
+   - `design-linked: true | source: Notion | scope: FE + BE`
+   Parse rules:
+   - designLinked = value after `design-linked:`
+   - If `scope:` text contains `FE` => scope.frontend = true
+   - If `scope:` text contains `BE` => scope.backend = true
+
+2) Alternate scope phrases anywhere:
+   - `scope: FE + BE`, `scope: BE`, `scope: FE`, `scope: frontend`, `scope: backend`
+
+If strict metadata exists, it ALWAYS wins over tolerant parsing.
+
+#### 4.2 Design Reference Tolerance (MANDATORY)
+
+Prefer `## Design References` + `Referenced Nodes:` with full URLs.
+If missing, attempt a safe reconstruction WITHOUT inventing node-ids:
+
+Inputs you may use:
+- Any `Figma File:` URL, or any `https://www.figma.com/design/...` URL in context
+- Any node tokens found in text like:
+  - `(1:549)`, `(1-549)`, `node-id=1:549`, `node-id=1-549`
+  - Lines like: `main (1:549): ...`
+
+Reconstruction rules:
+- Extract a base Figma design URL (the first `https://www.figma.com/design/<FILEKEY>/...` you see).
+- For each node token:
+  - Normalize `1-549` -> `1:549`
+  - URL-encode `:` as `%3A` when building `node-id` query values
+  - Construct full node URL: `<base-figma-url>?node-id=<ENCODED>`
+- Do NOT guess FILEKEY or node tokens. Only transform what exists.
+
+If designLinked == true and you still have zero node URLs after reconstruction:
+- Add a visible note in tasks: "Missing Figma node-id URLs; /opsx:apply will request them."
+
 ---
 
 ### 5. Create the artifact file
