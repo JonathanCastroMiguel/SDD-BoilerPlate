@@ -90,10 +90,13 @@ Rules:
 ---
 
 ### 5. Update Notion (CANONICAL ONLY, VERBATIM)
+
 If the source is Notion OR a Notion reference exists, update the Notion page as documentation.
 
 Rules (MANDATORY):
 - Read the saved draft file from Step 4.
+- ALWAYS use an APPEND operation to the end of the page.
+- NEVER use pattern matching, anchor matching, or content replacement.
 - Append ONLY:
   1) A heading: ENRICHED (CANONICAL — DO NOT EDIT)
   2) A single Notion CODE BLOCK whose content is EXACTLY the draft file contents (verbatim).
