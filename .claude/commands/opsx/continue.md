@@ -76,6 +76,23 @@ Parse the JSON. Key fields:
 
 4) Extract scope/design metadata (best-effort)
 
+#### 4.0 Enriched Section Extraction (ENTERPRISE HARDENING)
+
+Before scanning for metadata/design references, attempt to extract ONLY the enriched section.
+If the context contains the markers:
+
+<!-- BEGIN_ENRICHED_USER_STORY -->
+...
+<!-- END_ENRICHED_USER_STORY -->
+
+Then:
+- Restrict ALL metadata parsing and design reference parsing to the text between those markers.
+- Ignore any "Base User Story" content outside the markers.
+
+If markers are missing:
+- Fall back to scanning the full context (best-effort).
+
+
 Scan the dependency artifacts (and any available context files) for:
 
 - `design-linked: true|false`

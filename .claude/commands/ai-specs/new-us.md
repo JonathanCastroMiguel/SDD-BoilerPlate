@@ -1,3 +1,15 @@
+
+IMPORTANT OUTPUT CONTRACT:
+- You MAY display the Base User Story (original) for traceability.
+- You MUST then append the Enriched User Story wrapped in the exact markers:
+  <!-- BEGIN_ENRICHED_USER_STORY -->
+  # Enriched User Story
+  ... (strict metadata + content) ...
+  <!-- END_ENRICHED_USER_STORY -->
+- Do NOT output `## [Enriched User Story]`. Use the exact H1 heading.
+- Do NOT alter the Base User Story content when copying it.
+
+
 ---
 name: "ai-specs: new-us"
 description: Start from Jira, Notion, or manual input. Enrich the user story and optionally create an OpenSpecs change.

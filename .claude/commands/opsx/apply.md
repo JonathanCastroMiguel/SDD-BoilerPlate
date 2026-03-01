@@ -61,6 +61,28 @@ Read the files listed in `contextFiles` from the apply instructions output.
 
 ---
 
+### 4.0 Enriched Section Extraction (ENTERPRISE HARDENING)
+
+
+#### 4.0 Enriched Section Extraction (ENTERPRISE HARDENING)
+
+Before detecting scope/design and design references, attempt to extract ONLY the enriched section.
+If the loaded context contains:
+
+<!-- BEGIN_ENRICHED_USER_STORY -->
+...
+<!-- END_ENRICHED_USER_STORY -->
+
+Then:
+- Restrict ALL parsing to the text inside those markers.
+- Ignore any "Base User Story" content outside the markers.
+
+If markers are missing:
+- Fall back to scanning the full context (best-effort).
+
+
+---
+
 ### 4.1 Detect scope and design metadata
 
 Scan the loaded context files for:
