@@ -95,6 +95,22 @@ Archive a completed change in the experimental workflow.
    - Spec sync status (synced / sync skipped / no delta specs)
    - Note about any warnings (incomplete artifacts/tasks)
 
+8. **Update Notion Status to Done (MANDATORY)**
+
+   After a change is successfully archived:
+
+   1) Locate the originating Notion page reference for the change.
+      - Prefer a `reference:` field in the Enriched User Story / spec artifacts that contains a Notion URL.
+      - If multiple references exist, use the one that matches the current change context.
+
+   2) Update the Notion page property **Status** to exactly:
+      `Done`
+
+   Rules:
+   - Only do this if the Notion reference exists AND the Status property is present.
+   - Do not invent other status names.
+   - If the Notion update fails, still complete the archive and report the Notion error.
+
 **Output On Success**
 
 ```

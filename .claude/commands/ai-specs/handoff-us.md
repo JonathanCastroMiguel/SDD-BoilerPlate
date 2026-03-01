@@ -1,50 +1,95 @@
 ---
-category: Command
-description: Create OpenSpecs change from a previously saved canonical
-  enriched snapshot and archive it.
 name: "ai-specs: Handoff US"
-tags:
-- ai-specs
-- handoff
-- opsx
-- archive
+description: Validate enriched draft and start OpenSpec change
+category: Workflow
+tags: [ai-specs, workflow, handoff]
 ---
 
-# ai-specs:handoff-us (With Auto-Archive)
+Validate an enriched User Story draft and continue the delivery flow.
 
-Input: snapshot name (without extension)
+This command assumes an enriched canonical snapshot already exists in:
+drafts/enriched/
 
-Example: /ai-specs:handoff-us companies-20260301-1405
+It validates the snapshot, optionally confirms with the user, and then continues to /opsx:new.
+
+---
 
 ## Steps
 
-1️⃣ Load snapshot from:
+1. **Locate enriched snapshot**
 
-drafts/enriched/`<snapshot>`{=html}.md
+   Look inside:
+   drafts/enriched/
 
-2️⃣ Pass its FULL content verbatim to:
+   If multiple snapshots exist:
+   - Use AskUserQuestion to let the user select one.
 
-opsx:new
+   If none exist:
+   - Inform the user and stop.
 
-Rules: - Do NOT re-enrich. - Do NOT read from Notion. - Do NOT modify
-the snapshot. - Use the file content exactly as-is.
+2. **Validate snapshot structure**
 
-3️⃣ If `opsx:new` completes successfully:
+   Ensure the selected file:
 
--   Create directory if missing: drafts/enriched/\_archived/
+   - Contains the YAML header:
+     design-linked:
+     scope:
+     source:
+     reference:
 
--   Move the snapshot file to:
+   - Is wrapped between:
+     <!-- BEGIN_ENRICHED_USER_STORY -->
+     ...
+     <!-- END_ENRICHED_USER_STORY -->
 
-    drafts/enriched/\_archived/`<snapshot>`{=html}.md
+   If validation fails:
+   - Inform the user.
+   - Do NOT continue.
 
-4️⃣ Console Output
+3. **Confirm handoff**
 
-After successful archive, print:
+   Use AskUserQuestion:
 
-Snapshot archived to: drafts/enriched/\_archived/`<snapshot>`{=html}.md
+   Start OpenSpec change from this enriched snapshot?
 
-If `opsx:new` fails: - Do NOT move the file. - Leave it in
-drafts/enriched/ for retry.
+   Options:
+   - Yes, continue
+   - Cancel
 
-This guarantees: - Deterministic artifact generation - Clean active
-drafts directory - Full traceability of past enrichments
+   If Cancel → stop.
+
+4. **Update Notion Status to In Progress (MANDATORY)**
+
+   If the snapshot contains a Notion reference URL:
+
+   - Update the Notion page property Status to exactly:
+     In Progress
+
+   Rules:
+   - Only update if property exists.
+   - Do not invent status names.
+   - If update fails, continue but report the error.
+
+5. **Start OpenSpec change**
+
+   Execute:
+   /opsx:new
+
+   Use the enriched snapshot as input.
+
+6. **Archive snapshot locally**
+
+   Move the used snapshot to:
+   drafts/enriched/_archived/<snapshot>.md
+
+   Create _archived folder if it does not exist.
+
+---
+
+## Guardrails
+
+- Never modify the enriched snapshot content.
+- Never regenerate enriched inside this command.
+- Never rewrite canonical.
+- Only validate and continue workflow.
+- Status must move to In Progress before starting opsx:new.

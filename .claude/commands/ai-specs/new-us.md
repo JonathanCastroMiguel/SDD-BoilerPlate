@@ -87,6 +87,10 @@ Rules:
 - Capture the printed path from the enrich step:
   "Saved enriched draft: drafts/enriched/<slug>-<timestamp>.md"
 
+IMPORTANT:
+- After `ai-specs:enrich-us` completes, DO NOT stop or “return control”.
+- Continue immediately to Step 5 (Notion update) in the same run.
+
 ---
 
 ### 5. Update Notion (CANONICAL ONLY, VERBATIM)
@@ -95,10 +99,10 @@ If the source is Notion OR a Notion reference exists, update the Notion page as 
 
 Rules (MANDATORY):
 - Read the saved draft file from Step 4.
-- ALWAYS use an APPEND operation to the end of the page.
-- NEVER use pattern matching, anchor matching, or content replacement.
+- ALWAYS append blocks to the end of the page using the Notion API "append block children" style operation (i.e., append new blocks as children at the end of the page).
+- NEVER use pattern matching, anchor matching, content replacement, or full-page replace operations (including any "replace_content" fallback).
 - Append ONLY:
-  1) A heading: ENRICHED (CANONICAL — DO NOT EDIT)
+  1) A heading block with the exact text: `ENRICHED (CANONICAL — DO NOT EDIT)`
   2) A single Notion CODE BLOCK whose content is EXACTLY the draft file contents (verbatim).
 - DO NOT rewrite, summarize, or reformat the draft content.
 - The Notion code block MUST match the draft file 1:1.
@@ -130,7 +134,6 @@ If stopping:
 ---
 
 ### 7. Start OpenSpecs Change (Delivery Mode)
-If continuing, execute:
 
 Status update (MANDATORY):
 - Immediately BEFORE running `opsx:new`, update the Notion page property **Status** to exactly:
@@ -138,6 +141,8 @@ Status update (MANDATORY):
 
 Rules:
 - Only do this if a Notion page reference exists and the property is present.
+
+If continuing, execute:
 
 opsx:new
 
