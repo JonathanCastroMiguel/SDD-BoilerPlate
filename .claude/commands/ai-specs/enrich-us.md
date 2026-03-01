@@ -1,11 +1,11 @@
 ---
 name: "ai-specs: Enrich US"
-description: Enrich a user story from Jira, Notion, or manual text. If Figma references are present, mark design-linked: true and defer structural extraction to apply phase.
+description: Enrich a user story from Jira, Notion, or manual text. Uses Notion scope properties (BE/FE/Design Linked) when available. Design structure is resolved at apply-time (Live Design Mode).
 category: Command
-tags: [ai-specs, enrich, user-story, mcp, figma]
+tags: [ai-specs, enrich, user-story, mcp]
 ---
 
-Enrich a User Story so a developer can execute autonomously.
+Enrich a User Story so it is implementation-ready and aligned with project standards.
 
 Input ($ARGUMENTS) can be:
 - A Jira issue key or URL
@@ -45,7 +45,11 @@ If ambiguous, ask one clarifying question.
 - Normalize into Base User Story block.
 
 #### Notion
-- Fetch title and requirement-related blocks.
+- Fetch page title and requirement-related blocks.
+- If the page belongs to a database, attempt to read these boolean properties:
+  - Backend (BE)
+  - Frontend (FE)
+  - Design Linked
 - Normalize into Base User Story block.
 
 #### Manual
@@ -67,13 +71,55 @@ Reference: <url|key|N/A>
 
 ---
 
-### 4) Enrich the User Story
+### 4) Scope & Design Detection
+
+Initialize:
+
+scope:
+  backend: false
+  frontend: false
+
+design-linked: false
+
+#### 4.1 Scope from Notion properties (preferred)
+
+If Notion boolean properties exist:
+
+- scope.backend = value of "Backend (BE)"
+- scope.frontend = value of "Frontend (FE)"
+- design-linked = value of "Design Linked"
+
+Checkbox values always take priority over content inference.
+
+#### 4.2 Fallback inference (only if properties missing)
+
+If Backend/Frontend properties are missing:
+
+- Ask the user:
+  "Does this feature include backend, frontend, or both?"
+
+If Design Linked property is missing:
+
+- If a section titled "## Design References" exists OR any Figma URL is present:
+  - design-linked = true
+
+If both property and content exist and contradict:
+- Property value wins.
+
+---
+
+### 5) Enrich the User Story
 
 Produce:
 
 # Enriched User Story
 
 design-linked: <true|false>
+
+scope:
+  backend: <true|false>
+  frontend: <true|false>
+
 source: <Jira|Notion|Manual>
 reference: <url|key|N/A>
 
@@ -92,57 +138,33 @@ reference: <url|key|N/A>
 
 Rules:
 - Be specific and implementation-ready.
-- Do not invent tech stack.
-- Ask clarification if needed.
+- Do not invent tech stack details.
+- Follow project standards where available.
+- Tests are NOT controlled by scope booleans — they are governed by project standards.
 
 ---
 
-## 4.1) Design Reference Detection (Light Mode)
+### 6) Design References (Light Mode)
 
-If the input contains:
+If design-linked is true:
 
-- A section titled "## Design References"
-OR
-- Any Figma URL
-
-Then:
-
-- Set `design-linked: true`
-- Extract:
-  - Figma File URL (if present)
-  - Node URL(s) with node-id
-  - Component names (if listed)
-
-Do NOT:
-- Extract layout hierarchy
-- Extract spacing/padding
-- Freeze structure
-- Create Layout Contract
-
-If no Figma references exist:
-- Set `design-linked: false`
-
----
-
-### 4.2) Add Design Reference Section (Light)
-
-If design-linked is true, append:
+Append:
 
 ## Design References
 
 Figma File:
-<url or inferred from node>
+<url if available>
 
 Referenced Nodes:
 - <node-url-1>
 - <node-url-2>
 
 Note:
-Design structure and layout must be retrieved directly from Figma MCP during the implementation phase (opsx:apply). No structural assumptions are frozen at enrichment time.
+Design structure and layout will be retrieved live during the implementation phase (opsx:apply) via Figma MCP. No structural assumptions are frozen at enrichment time.
 
 ---
 
-### 5) Source Update Behavior
+### 7) Source Update Behavior
 
 #### Jira
 Ask:
@@ -150,10 +172,8 @@ Ask:
 Default: yes
 
 If updating:
-- Append enhanced section
-- Move status from "To refine" → "Pending refinement validation" (if possible)
-
----
+- Append enhanced content.
+- Move status from "To refine" → "Pending refinement validation" (if possible).
 
 #### Notion
 Ask:
@@ -161,14 +181,14 @@ Ask:
 Default: yes
 
 If updating:
-- Append enhanced content
-- Move Status property to "Pending refinement validation" (if exists)
+- Append enhanced content.
+- If Status property exists, move to "Pending refinement validation" (safe mode).
 
 Never fail if status transition not possible.
 
 ---
 
-### 6) Output
+### 8) Output
 
 Always return:
 
@@ -176,6 +196,7 @@ Always return:
 2) Enriched User Story
 3) Summary line:
    - Source: ...
+   - Scope: backend=<true|false>, frontend=<true|false>
    - Design linked: true/false
    - Updated: yes/no/N/A
    - Status changed: yes/no/N/A

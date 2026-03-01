@@ -1,6 +1,6 @@
 ---
 name: "OPSX: Apply"
-description: Implement tasks from an OpenSpec change (Experimental). If design-linked is true, fetch design structure live from Figma MCP before implementing UI tasks.
+description: Implement tasks from an OpenSpec change (Experimental). Uses scope metadata for FE/BE. If scope.frontend and design-linked are true, fetch design structure live from Figma MCP before implementing frontend tasks.
 category: Workflow
 tags: [workflow, artifacts, experimental, figma, mcp]
 ---
@@ -61,16 +61,36 @@ Read the files listed in `contextFiles` from the apply instructions output.
 
 ---
 
-### 4.1 Detect design-linked and design references (Live Design Mode)
+### 4.1 Detect scope and design metadata
 
 Scan the loaded context files for:
 
-- `design-linked: true`
+- `design-linked: true|false`
+- A `scope:` block containing:
+  - `backend: true|false`
+  - `frontend: true|false`
 
-If found, enable **Live Design Mode**.
+Initialize (defaults):
 
-In Live Design Mode, extract design references from the context:
-- Look for a `## Design References` section (preferred).
+- `scope.backend = false`
+- `scope.frontend = false`
+- `designLinked = false`
+- `liveDesignEnabled = false`
+
+Rules:
+- If `scope.frontend == true` and `design-linked == true`:
+  - `liveDesignEnabled = true`
+- Otherwise:
+  - `liveDesignEnabled = false`
+
+---
+
+### 4.2 Detect design references (Live Design Mode only)
+
+Only if `liveDesignEnabled == true`:
+
+Extract design references from the context:
+- Prefer a `## Design References` section.
 - Parse:
   - `Figma File:` URL (optional if node URLs exist)
   - `Referenced Nodes:` list of node URLs containing `node-id=...`
@@ -78,14 +98,14 @@ In Live Design Mode, extract design references from the context:
 Rules:
 - If Live Design Mode is enabled but no node-id URLs are found:
   - Pause and ask the user to provide at least one Figma node URL with `node-id`.
-  - Do NOT implement UI tasks until a node-id is available.
+  - Do NOT implement frontend tasks until a node-id is available.
 - Do not assume design structure from prose alone.
 
 ---
 
-### 4.2 Fetch design snapshot via Figma MCP (Live Design Mode)
+### 4.3 Fetch design snapshot via Figma MCP (Live Design Mode only)
 
-If Live Design Mode is enabled AND Figma MCP is authenticated:
+Only if `liveDesignEnabled == true` and Figma MCP is authenticated:
 
 For each referenced node:
 - Inspect the node via Figma MCP.
@@ -112,9 +132,9 @@ Node: <...> (node-id=...)
   - <...>
 
 If Figma MCP is not authenticated:
-- Keep Live Design Mode enabled.
-- Warn that UI fidelity may be lower.
-- Ask the user whether to proceed or to authenticate Figma via `/mcp`.
+- Keep `liveDesignEnabled == true`.
+- Warn that frontend fidelity may be lower.
+- Ask the user whether to proceed (AI-designed UI) or authenticate Figma via `/mcp`.
 
 ---
 
@@ -125,7 +145,10 @@ Display:
 - Progress: "N/M tasks complete"
 - Remaining tasks overview
 - Dynamic instruction from CLI
-- If Live Design Mode is enabled: show "Live Design Mode: ON" and list the referenced node-ids
+- Scope summary: `backend=<true|false>, frontend=<true|false>`
+- Design summary: `design-linked=<true|false>, Live Design Mode=<ON|OFF>`
+
+If Live Design Mode is ON, list the referenced node-ids.
 
 ---
 
@@ -137,18 +160,46 @@ For each pending task:
 - Keep changes minimal and focused
 - Mark task complete in the tasks file: `- [ ]` → `- [x]`
 
-#### 6.1 UI tasks must follow design snapshot (Live Design Mode)
+#### 6.1 Determine whether the current task is frontend-related
 
-If Live Design Mode is ON and the task impacts UI (frontend views/components/styles):
-- Use the Design Snapshot as the primary source of truth.
-- Do not approximate layout from prose if it conflicts with the snapshot.
-- If there is a mismatch between tasks/specs and the snapshot:
-  - Pause and propose updating artifacts OR clarifying which is authoritative.
-- If a component is referenced in the snapshot but not in codebase:
-  - Create a wrapper component to match the design structure.
-- Prefer component composition that mirrors the Figma hierarchy (avoid flattening).
+A task is frontend-related if it mentions any of:
+- frontend, ui, react, component, page, view, layout, modal, table, css, styles, responsive, accessibility
+or references typical UI paths/extensions:
+- src/, components/, pages/, .tsx, .jsx, .css, .scss
 
-Non-UI tasks (API, services, backend) proceed normally.
+If uncertain, treat it as frontend-related only when the change touches frontend files.
+
+---
+
+#### 6.2 Frontend task behavior
+
+If `scope.frontend == true` AND the task is frontend-related:
+
+- If `design-linked == true`:
+  - Use the Design Snapshot as the primary source of truth.
+  - Do not approximate layout from prose if it conflicts with the snapshot.
+  - Mirror the Figma hierarchy when composing components (avoid flattening).
+- If `design-linked == false`:
+  - Implement an AI-designed UI guided by frontend standards.
+  - Keep it minimal, consistent, and accessible.
+  - Document any key UI assumptions briefly (in code comments or a short note in the task context).
+
+If `scope.frontend == false`:
+- Do NOT implement frontend UI changes as part of this change.
+- If a task appears frontend-related but scope.frontend is false, pause and ask whether to update scope/artifacts.
+
+---
+
+#### 6.3 Backend task behavior
+
+If `scope.backend == true` AND the task is backend-related:
+- Implement backend changes normally following backend standards.
+
+If `scope.backend == false`:
+- Do NOT implement backend changes as part of this change.
+- If a task appears backend-related but scope.backend is false, pause and ask whether to update scope/artifacts.
+
+---
 
 Pause if:
 - Task is unclear → ask for clarification
@@ -173,8 +224,8 @@ Display:
 ```
 ## Implementing: <change-name> (schema: <schema-name>)
 
-Live Design Mode: ON
-Referenced node-ids: <...>
+Scope: backend=<true|false>, frontend=<true|false>
+Design: design-linked=<true|false>, Live Design Mode=<ON|OFF>
 
 Working on task 3/7: <task description>
 [...implementation happening...]
@@ -217,6 +268,7 @@ All tasks complete! You can archive this change with `/opsx:archive`.
 
 What would you like to do?
 ```
+
 ---
 
 ## Guardrails
@@ -228,8 +280,9 @@ What would you like to do?
 - Update task checkbox immediately after completing each task
 - Pause on errors, blockers, or unclear requirements
 
-Live Design Mode guardrails:
-- If `design-linked: true`, do not implement UI tasks without at least one node-id URL.
+Design guardrails:
+- Live Design Mode is enabled ONLY when `scope.frontend == true` AND `design-linked == true`.
+- If Live Design Mode is ON, do not implement frontend UI tasks without at least one node-id URL.
 - Prefer the Design Snapshot over prose when implementing UI.
 - Never modify Figma.
 - Do not write snapshot back to Notion unless explicitly requested.
