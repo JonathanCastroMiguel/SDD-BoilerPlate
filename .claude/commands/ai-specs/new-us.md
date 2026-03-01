@@ -1,32 +1,25 @@
-
-IMPORTANT OUTPUT CONTRACT:
-- You MAY display the Base User Story (original) for traceability.
-- You MUST then append the Enriched User Story wrapped in the exact markers:
-  <!-- BEGIN_ENRICHED_USER_STORY -->
-  # Enriched User Story
-  ... (strict metadata + content) ...
-  <!-- END_ENRICHED_USER_STORY -->
-- Do NOT output `## [Enriched User Story]`. Use the exact H1 heading.
-- Do NOT alter the Base User Story content when copying it.
-
-
 ---
 name: "ai-specs: new-us"
-description: Start from Jira, Notion, or manual input. Enrich the user story and optionally create an OpenSpecs change.
+description: Start from Jira, Notion, or manual input. Enrich the user story, persist a canonical snapshot, optionally update Notion, and optionally create an OpenSpecs change.
 category: Command
 tags: [ai-specs, opsx, enrich, mcp]
 ---
 
-Create a new User Story from Jira, Notion, or manual input.  
-Enrich it using `ai-specs: enrich-us`.  
-Then optionally execute `opsx:new` using the enriched story as the ONLY input.
+# ai-specs:new-us (Draft-first, Deterministic Handoff)
+
+Create a new User Story from Jira, Notion, or manual input.
+Normalize it into a **Base User Story**.
+Run `ai-specs:enrich-us` to generate a **canonical** Enriched User Story and save it to `drafts/enriched/...`.
+
+**Priority order**
+1) The saved draft file is the single source of truth (used for opsx:new and for Notion documentation).
+2) Notion is updated by copying the draft verbatim (no rewriting).
 
 ---
 
 ## Steps
 
 ### 0. Detect available MCP integrations
-
 Determine which integrations are authenticated:
 - Atlassian (Jira)
 - Notion
@@ -38,53 +31,16 @@ Rules:
 ---
 
 ### 1. Choose input source
-
-Ask the user:
-
-Do you want to start from:
-- Jira issue (if connected)
-- Notion page (if connected)
-- Manual input
-
-If the selected source requires authentication and authentication is missing:
-- Prompt the user to authenticate via /mcp.
-- Offer the option to continue using Manual Input instead.
-
-If integration access fails after authentication,
-automatically fall back to Manual Input.
+Ask the user whether to start from Jira, Notion, or Manual.
 
 ---
 
 ### 2. Collect and normalize into Base User Story
-
-#### Jira (if selected)
-
-Ask for issue key or URL.
-
-Retrieve:
-- Title
-- Description
-- Acceptance criteria (if present)
-- Only relevant comments (optional)
-
-#### Notion (if selected)
-
-Ask for page URL or ID.
-
-Retrieve:
-- Page title
-- Requirement-related blocks
-- Acceptance criteria
-- Constraints
-
-#### Manual (if selected)
-
-Ask user to paste raw user story text.
+Retrieve the relevant content for the chosen source.
 
 ---
 
 ### 3. Normalize into required format
-
 Produce exactly one markdown block:
 
 # Base User Story
@@ -108,64 +64,70 @@ Reference: <issue key/url or notion url/id or "N/A">
 
 ---
 
-### 4. Enrich the User Story
-
+### 4. Enrich the User Story (creates draft snapshot)
 Execute:
 
-ai-specs: enrich-us
+ai-specs:enrich-us
 
 Input:
 The Base User Story markdown block.
 
 Rules:
-- The output must be an implementation-ready Enriched User Story.
+- The output MUST include a canonical enriched section wrapped in BEGIN/END markers.
+- The command MUST save the canonical enriched section to:
+  drafts/enriched/<slug>-<timestamp>.md
+- Capture the printed path from the enrich step:
+  "Saved enriched draft: drafts/enriched/<slug>-<timestamp>.md"
 
 ---
 
-### 5. Decide Next Action
+### 5. Update Notion (CANONICAL ONLY, VERBATIM)
+If the source is Notion OR a Notion reference exists, update the Notion page as documentation.
 
+Rules (MANDATORY):
+- Read the saved draft file from Step 4.
+- Append ONLY:
+  1) A heading: ENRICHED (CANONICAL — DO NOT EDIT)
+  2) A single Notion CODE BLOCK whose content is EXACTLY the draft file contents (verbatim).
+- DO NOT rewrite, summarize, or reformat the draft content.
+- The Notion code block MUST match the draft file 1:1.
+
+If Notion is not available, skip this step.
+
+---
+
+### 6. Decide Next Action
 Ask the user:
 
-Do you want to:
-
-- Stop here (PO mode) and keep only the Enriched User Story
+- Stop here (PO mode). Use the saved draft for handoff later.
 - Continue and create an OpenSpecs change (run opsx:new)
 
-Rules:
-- If the user chooses "Stop here", end the command.
-- If the user chooses "Continue", proceed to Step 6.
-- If the user provides no explicit answer, default to Stop here.
+Default to Stop here if unclear.
 
 If stopping:
-- Inform the user they can later run:
-
-  opsx:new
-
-  and paste the Enriched User Story manually.
+- Print the saved draft path and recommend:
+  /ai-specs:handoff-us <slug>-<timestamp>
 
 ---
 
-### 6. Start OpenSpecs Change (Delivery Mode)
-
-Execute:
+### 7. Start OpenSpecs Change (Delivery Mode)
+If continuing, execute:
 
 opsx:new
 
 Input:
-The Enriched User Story from Step 4.
+The FULL CONTENTS of the saved draft file (from Step 4), verbatim.
 
 Rules:
-- Do not modify the enriched story before passing it.
+- Do not modify the draft content before passing it.
 - Follow opsx:new instructions exactly.
-- Stop where opsx:new tells you to stop.
 
 ---
 
-### 7. Report
-
+### 8. Report
 Display:
 - Selected source
-- Confirmation that enrichment ran
-- Whether OpenSpecs change was created
-- If created: change name/path
-- The next recommended action
+- Draft path saved
+- Whether Notion was updated (and that it was copied verbatim from draft)
+- Whether an OpenSpecs change was created
+- Next recommended action

@@ -1,103 +1,74 @@
 ---
+name: "ai-specs: enrich-us"
+description: Enrich a Base User Story into a deterministic, machine-parseable Enriched User Story and persist a canonical snapshot for handoff.
 category: Command
-description: Enrich a user story, preserve Figma node URLs verbatim, and
-  persist a canonical snapshot for deterministic handoff.
-name: "ai-specs: Enrich US"
-tags:
-- ai-specs
-- enrich
-- user-story
-- snapshot
-- figma
+tags: [ai-specs, enrich, user-story, snapshot, figma]
 ---
 
-# ai-specs:enrich-us (Enterprise Snapshot Mode v3)
+# ai-specs:enrich-us (Canonical Snapshot First)
 
-## Core Contract (MANDATORY)
+You take a **Base User Story** as input and produce an **Enriched User Story**.
 
-Your output MAY include the Base User Story for traceability. However,
-the canonical enriched spec MUST be deterministic, machine-parseable,
-and must preserve design URLs.
+This command is the source of truth for the enriched content used by OpenSpecs.
+Notion is *documentation only* and MUST be updated using the exact saved snapshot (handled by `ai-specs:new-us`).
 
-### Canonical section markers
+## Core Output Contract (MANDATORY)
 
-You MUST wrap the canonical enriched content with the exact markers:
+Your output MAY include the Base User Story for traceability, but you MUST also output a canonical enriched section wrapped with these **exact** markers:
 
-```{=html}
 <!-- BEGIN_ENRICHED_USER_STORY -->
-```
 # Enriched User Story
 
-... (strict metadata + content) ...
-`<!-- END_ENRICHED_USER_STORY -->`{=html}
+design-linked: <true|false>
+scope:
+  backend: <true|false>
+  frontend: <true|false>
+source: <Notion|Jira|Manual>
+reference: <url-or-id>
 
-Rules: - `# Enriched User Story` MUST be an H1 immediately after BEGIN
-marker. - Do NOT use brackets in headings. - The metadata block MUST be
-valid YAML with 2-space indentation.
+... enriched content ...
 
-### Strict metadata block (MANDATORY)
+<!-- END_ENRICHED_USER_STORY -->
 
-Immediately after the H1, output this block with valid YAML:
-
-design-linked: \<true\|false\> scope: backend: \<true\|false\> frontend:
-\<true\|false\> source: \<Notion\|Jira\|Manual\> reference:
-`<url-or-id>`{=html}
-
-Booleans MUST be lowercase `true|false`.
+Rules:
+- `# Enriched User Story` MUST be an H1 immediately after the BEGIN marker.
+- Booleans MUST be lowercase `true|false`.
+- The YAML block MUST be valid (2-space indentation).
+- Do NOT use brackets in headings (NO `## [Enriched User Story]`).
 
 ## Design URL Preservation (MANDATORY)
 
-If `design-linked: true` and the Base User Story contains Figma node
-URLs (any URLs containing `node-id=`), then the canonical enriched spec
-MUST include a `## Design References` section with:
+If `design-linked: true` AND the Base User Story contains any Figma URLs with `node-id=...`,
+then the canonical enriched section MUST include:
 
-Figma File: `<figma file url>`{=html}
+## Design References
 
-Referenced Nodes: - \<FULL figma node url 1 containing node-id=...\> -
-\<FULL figma node url 2 containing node-id=...\> ...
+Figma File:
+<figma file url>
 
-IMPORTANT: - You MUST copy the node URLs verbatim from the Base User
-Story (do NOT replace with "Node 1:3" text). - You MUST NOT omit,
-shorten, or "pretty print" URLs. - You MAY additionally include a
-human-friendly "Figma Reference" section (Node 1:3 --- Sidebar, etc.),
-but the canonical URLs section is required.
+Referenced Nodes:
+- <FULL figma node url containing node-id=...>
+- ...
 
-If `design-linked: true` but there are NO `node-id=` URLs in the Base
-User Story, ask the user for at least one node URL.
+IMPORTANT:
+- Copy node URLs verbatim (do NOT replace with "Node 1:3" text).
+- Do NOT omit, shorten, re-encode, or "pretty print" URLs.
 
-## 1️⃣ Persist Canonical Snapshot (MANDATORY)
+If `design-linked: true` but there are zero `node-id=` URLs in the Base User Story, ask the user for at least one node URL.
 
-After producing the canonical enriched section:
+## Persist Canonical Snapshot (MANDATORY)
 
-1.  Generate slug from the feature title (kebab-case).
-2.  Generate timestamp: YYYYMMDD-HHMM.
-3.  Save ONLY the canonical enriched content (the text between BEGIN/END
-    markers, inclusive) to:
+After you have produced the canonical enriched section:
 
-drafts/enriched/`<slug>`{=html}-`<timestamp>`{=html}.md
+1) Create slug from the feature title (kebab-case).
+2) Create timestamp: YYYYMMDD-HHMM.
+3) Save ONLY the canonical enriched section (from `<!-- BEGIN... -->` to `<!-- END... -->`, inclusive) to:
+
+drafts/enriched/<slug>-<timestamp>.md
 
 No Base User Story. No formatting transformations.
 
-## 2️⃣ Notion Update (CANONICAL ONLY, FAST)
+## Notion Update
 
-When updating Notion, do NOT render a readable version.
-
-Instead, append only:
-
-1)  A heading: ENRICHED (CANONICAL --- DO NOT EDIT)
-
-2)  A single CODE BLOCK whose contents are EXACTLY the canonical
-    enriched content between BEGIN/END markers (verbatim). This must
-    match the saved draft file 1:1.
-
-You MUST NOT: - Rephrase - Summarize - Remove URLs - Modify indentation
-
-## 3️⃣ Console Output
-
-After saving the draft, print:
-
-Saved enriched draft:
-drafts/enriched/`<slug>`{=html}-`<timestamp>`{=html}.md
-
-Next step for developer: Run /ai-specs:handoff-us
-`<slug>`{=html}-`<timestamp>`{=html}
+DO NOT update Notion in this command.
+Notion MUST be updated by `ai-specs:new-us` by copying the saved draft file verbatim into a Notion code block.
