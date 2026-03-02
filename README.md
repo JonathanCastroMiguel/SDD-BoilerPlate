@@ -51,14 +51,10 @@ No direct coding outside this flow.
 
 # 🏗 Project Architecture
 
-.claude/ commands/ opsx/ → OpenSpecs workflow commands ai-specs/ →
-Governance & standards commands skills/ → Command orchestration
-
-ai-specs/ specs/ backend-standards.mdc frontend-standards.mdc
-documentation-standards.mdc data-model.md api-spec.yml
-development_guide.md templates/ backend-standards-template.mdc
-frontend-standards-template.mdc data-model-template.md
-development_guide-template.md
+- `.claude/commands/opsx/` → OpenSpecs workflow commands
+- `.claude/commands/ai-specs/` → Governance & standards commands
+- `ai-specs/` → Specs, templates, standards, docs
+- `openspec/` → OpenSpecs CLI workflow
 
 openspec/ → OpenSpecs CLI workflow
 
@@ -82,7 +78,6 @@ Lifecycle management commands:
 -   /opsx:bulk-archive --- Archive multiple changes
 -   /opsx:explore --- Investigation mode (no implementation)
 -   /opsx:onboard --- Guided onboarding through workflow
--   /opsx:commit --- Structured commit/PR workflow
 
 These commands manage the change lifecycle only.
 
@@ -100,15 +95,24 @@ These commands manage standards, documentation, planning, and execution.
     Enforce documentation-standards.mdc (update API spec, data model,
     development guide).
 
+-   /ai-specs:new-us\  
+    Create a new structured user story aligned with SDD standards.
+
 -   /ai-specs:enrich-us\
     Improve and refine user stories/tickets for clarity and
     completeness.
+
+-   /ai-specs:handoff-us\
+    Prepare a validated user story for implementation (technical-ready state).
 
 -   /ai-specs:plan-backend-ticket\
     Generate an implementation plan for backend tickets.
 
 -   /ai-specs:plan-frontend-ticket\
     Generate an implementation plan for frontend tickets.
+
+-   /ai-specs:commit\  
+    Structured commit (and optional PR) workflow with governance checks.
 
 -   /ai-specs:explain\
     Deep conceptual explanation mode.
