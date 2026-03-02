@@ -204,6 +204,32 @@ If Figma MCP is not authenticated:
 - Warn that frontend fidelity may be lower.
 - Ask the user whether to proceed (AI-designed UI) or authenticate Figma via `/mcp`.
 
+#### 4.3.1 UI Framework Compatibility Gate (MANDATORY)
+
+Define the target UI framework for this change as `uiFramework`.
+
+Sources of truth (in order):
+1) Change config / workflow input (if provided)
+2) Project standards / frontend standards docs (if present)
+3) Existing frontend code patterns (imports + dependencies)
+4) If still ambiguous: ask the user to choose one (`tailwind`, `bootstrap`, `mui`, `custom-css`)
+
+Rules:
+- Figma MCP often returns React + Tailwind code. Treat it as a *visual reference* by default.
+- You MAY directly reuse MCP Tailwind classes ONLY if `uiFramework == "tailwind"` AND the repo already uses Tailwind.
+- Otherwise, you MUST convert MCP output to match `uiFramework` and the project conventions:
+  - Keep structure and UI states (active/inactive/hover), spacing, typography, colors, radii
+  - Do NOT introduce new UI frameworks or install dependencies unless the user explicitly requests it
+  - Avoid absolute-positioned “pixel perfect” recreation unless the existing codebase already uses that approach
+
+#### 4.3.2 Repo Search Scope Limits (MANDATORY)
+
+When detecting `uiFramework` and styling conventions, restrict reads/searches to the minimal frontend scope:
+- frontend/package.json, frontend/src/**, frontend/public/**, frontend/tsconfig.json
+- and only the current change folder under openspec/changes/<name>/** when needed
+
+Do NOT scan templates or unrelated directories (e.g., ai-specs/specs/templates/**, .claude/**, historical archives) unless explicitly required by the current task.
+
 ---
 
 ### 5. Show current progress
