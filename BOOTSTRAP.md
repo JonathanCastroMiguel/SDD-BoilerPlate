@@ -17,7 +17,7 @@ This guide explains how to bootstrap a new project using this template.
 
 ------------------------------------------------------------------------
 
-# 1️⃣ Create a New Project from This Template
+# 1. Create a New Project from This Template
 
 Option A (Recommended): - Mark this repository as a GitHub Template. -
 Click **"Use this template"** to create a new repo.
@@ -27,7 +27,7 @@ Initialize a new Git repository.
 
 ------------------------------------------------------------------------
 
-# 2️⃣ Clean Project-Specific Content
+# 2. Clean Project-Specific Content
 
 Keep:
 
@@ -48,9 +48,73 @@ Remove (if present):
 
 The governance and workflow system must remain intact.
 
+# ⚠️ IMPORTANT — DO NOT RUN `openspec init`
+
+This repository is **already initialized**.
+
+Running:
+
+```bash
+openspec init
+```
+
+inside this project may overwrite:
+
+Custom /opsx:* commands
+Custom /ai-specs:* commands
+
+The curated OpenSpec structure
+
+If you do this, commands may stop working.
+
+In this repository, NEVER run openspec init.
+
 ------------------------------------------------------------------------
 
-# 3️⃣ Initialize Standards (MANDATORY)
+# 3. Minimum Requirements (New Machine)
+
+Install the following:
+
+Git
+
+Node.js (if OpenSpec is installed via npm/pnpm)
+
+(Optional) Python, if required by your backend stack
+
+VS Code
+
+The Claude Code VS Code extension (Anthropic)
+
+# 4. Setup Steps
+
+Clone the repository:
+
+git clone <YOUR_REPO>
+cd <YOUR_REPO>
+
+Run the bootstrap script:
+
+bash scripts/bootstrap.sh
+
+The script will:
+
+Verify you are in the correct project root
+
+Verify custom Claude commands exist
+
+Check if OpenSpec CLI is installed
+
+Warn if openspec init was executed accidentally
+
+Provide corrective guidance if something is missing
+
+# 5. First-Time Project Usage
+
+This is the actual minimal workflow.
+
+Some commands exist but are not required in every scenario.
+
+# 6. Initialize Standards (MANDATORY)
 
 If these files do not exist:
 
@@ -59,7 +123,9 @@ If these files do not exist:
 
 Run:
 
+```bash
 /ai-specs:init-standards
+```
 
 You will be prompted for:
 
@@ -77,25 +143,130 @@ Without this step, development is blocked by design.
 
 ------------------------------------------------------------------------
 
-# 4️⃣ Start Spec-Driven Development
 
-Create your first change:
+# 7. Create User Stories (If using Notion MCP)
 
+```bash
+/ai-specs:new-us
+```
+
+This command internally calls:
+
+/ai-specs:enrich-us
+
+to ensure the story follows SDD structure.
+
+Then the system ask you for POMode or Dev:
+
+# 8.1 Product Owner Mode (PO Mode)
+
+If working in refinement mode:
+
+Iterate on the draft
+
+When ready for implementation:
+
+```bash
+/ai-specs:handoff-us
+```
+
+This validates and upgrades the story to implementation-ready 
+status.
+
+# OR
+
+# 8.2 Development Mode (Dev Mode)
+
+Once the User Story is implementation-ready:
+
+```bash
 /opsx:new
+```
 
-Follow the lifecycle strictly:
+Then continue working on the change:
 
-1.  Define specs
-2.  Apply change
-3.  Verify artifacts
-4.  Update documentation
-5.  Archive change
+```bash
+/opsx:continue
+```
 
-Do not bypass the workflow.
+# 9. Apply (When the 4 Artifacts Are Ready)
+
+When all required artifacts are completed:
+
+```bash
+/opsx:apply
+```
+
+This step includes:
+
+- Implementation
+- Validation
+- Verify execution (quality gate)
+
+# 10. Archive
+
+When everything passes validation:
+
+```bash
+/opsx:archive
+```
+
+# 11. Diagram
+
+![SDD Workflow](/docs/workflow-diagram.png)
+
+Versión mermaid
+```mermaid
+flowchart TD
+  A[Init Standards<br/>/ai-specs:init-standards] --> B{Using Notion MCP?}
+  B -- Yes --> C[/ai-specs:new-us<br/>(calls enrich-us)/]
+  B -- No --> D[Create US manually<br/>using .md in Draft folder]
+
+  C --> E{PO Mode or Dev Mode?}
+  D --> E
+
+  E -- PO Mode --> F[Refine draft]
+  F --> G[/ai-specs:handoff-us<br/>(implementation-ready)/]
+  G --> H[/opsx:new/]
+
+  E -- Dev Mode --> H[/opsx:new/]
+  H --> I[/opsx:continue/]
+
+  I --> J{Are 4 artifacts complete?}
+  J -- No --> I
+  J -- Yes --> K[/opsx:apply<br/>(includes verify)/]
+  K --> L{Verify OK?}
+  L -- No --> I
+  L -- Yes --> M[/opsx:archive/]
+
+```
+
+# 12 Troubleshooting
+Claude commands not visible
+
+If /opsx:* or /ai-specs:* commands are not detected:
+
+Make sure VS Code opened the project root (where .claude/ exists)
+
+Ensure Workspace Trust is enabled
+
+Restart VS Code
+
+Confirm you are using Claude Code, not Copilot Chat
+
+Someone ran openspec init
+
+If commands stopped working after running openspec init:
+
+Run:
+
+bash scripts/bootstrap.sh
+
+Follow the repair instructions provided by the script.
 
 ------------------------------------------------------------------------
 
-# 5️⃣ Documentation Rules
+# 13. Documentation Rules
 
 All documentation lives under:
 
@@ -114,7 +285,7 @@ Documentation is enforced automatically during:
 
 ------------------------------------------------------------------------
 
-# 6️⃣ Optional Hardening
+# 14. Optional Hardening
 
 For stricter governance, consider:
 
@@ -125,7 +296,7 @@ For stricter governance, consider:
 
 ------------------------------------------------------------------------
 
-# 🎯 Final Principle
+# Final Principle
 
 This repository is not a code scaffold.
 
