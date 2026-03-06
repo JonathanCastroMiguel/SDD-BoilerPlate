@@ -385,6 +385,82 @@ What would you like to do?
 
 ---
 
+### 8. Post-apply integration validation (Smoke Test)
+
+After all tasks are marked complete, run an automated smoke test if Docker infrastructure exists.
+
+#### 8.1 Check for Docker infrastructure
+
+Look for `docker-compose.yml` (or `docker-compose.yaml`, `compose.yml`) at the project root.
+
+- If found: proceed to 8.2.
+- If not found: skip this step, warn that no Docker infrastructure exists for integration validation, and suggest running `/ai-specs:init-standards` to generate it.
+
+#### 8.2 Build and start the stack
+
+```bash
+docker compose up -d --build
+```
+
+Wait for all services to be healthy (check `docker compose ps`).
+
+- If any service fails to start: report the error, show logs (`docker compose logs <service>`), and pause.
+- Timeout: 120 seconds max. If not healthy by then, report and pause.
+
+#### 8.3 Run smoke checks
+
+Perform the following validation checks:
+
+**Backend:**
+- Hit the health/root endpoint (e.g., `GET /` or `GET /health` or `GET /api/v1/`) — expect 2xx.
+- Hit one representative endpoint from the change (e.g., `GET /api/v1/<resource>/`) — expect 2xx (even if empty list).
+- Verify CORS: send an `OPTIONS` request with `Origin: http://localhost:<frontend-port>` — expect `Access-Control-Allow-Origin` header.
+
+**Frontend:**
+- Hit the frontend URL (e.g., `GET http://localhost:<frontend-port>/`) — expect 2xx with HTML content.
+- Check that the page doesn't show a blank/error screen (look for `<div id="root">` or equivalent in response).
+
+**Integration:**
+- From the frontend container/URL, verify the API URL resolves correctly (no double-prefix like `/api/v1/api/v1/`).
+
+#### 8.4 Run E2E tests (if available)
+
+If Cypress, Playwright, or other E2E test configs exist:
+- Attempt to run them against the live stack.
+- Report pass/fail results.
+- If E2E tests fail: show the failure details but do NOT block the apply — report as warnings.
+
+#### 8.5 Tear down
+
+```bash
+docker compose down
+```
+
+Clean up after validation. Do NOT leave containers running.
+
+#### 8.6 Report results
+
+Display a summary:
+
+```
+## Integration Validation
+
+- Backend health: ✓/✗
+- Backend API endpoint: ✓/✗
+- CORS: ✓/✗
+- Frontend serves: ✓/✗
+- API URL routing: ✓/✗ (no double-prefix)
+- E2E tests: ✓/✗/skipped
+
+Issues found: <list or "none">
+```
+
+If any check fails:
+- Show the specific error and suggested fix.
+- Ask the user whether to fix now or proceed to archive anyway.
+
+---
+
 ## Guardrails
 
 - Keep going through tasks until done or blocked

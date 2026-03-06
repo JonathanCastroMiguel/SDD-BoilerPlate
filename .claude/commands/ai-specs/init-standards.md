@@ -174,13 +174,100 @@ Must include:
 
 ---
 
-### 5. Report results
+### 5. Generate Docker scaffolding
+
+Based on the confirmed stack from Step 2, generate the following files at the project root:
+
+#### 5.1 `Dockerfile` (backend)
+
+Create `backend/Dockerfile` (or `Dockerfile` if monolith):
+
+Rules:
+- Use the confirmed language/framework from Step 2.
+- Multi-stage build when appropriate (build + runtime).
+- Install only production dependencies by default.
+- Expose the correct port for the framework.
+- Use a non-root user for runtime.
+- Include a health check endpoint if the framework supports it.
+
+#### 5.2 `Dockerfile` (frontend)
+
+Create `frontend/Dockerfile` (if frontend exists):
+
+Rules:
+- Use a build stage (e.g., `node:*-alpine` for Node projects) + a lightweight serve stage (e.g., `nginx:alpine` or `serve`).
+- Copy build artifacts only to the serve stage.
+- Expose the correct port (default 3000 or 80 for nginx).
+- Support environment variables at build time via build args (e.g., `VITE_API_URL`).
+
+#### 5.3 `docker-compose.yml`
+
+Create `docker-compose.yml` at the project root:
+
+Rules:
+- Include services for: database (if any), backend, frontend, and a migration/seed step if applicable.
+- Use the confirmed database from Step 2 (e.g., `postgres:16-alpine`).
+- Backend depends on database (with healthcheck).
+- Frontend depends on backend.
+- Use environment variables for all configuration (DB connection, API URLs, CORS origins).
+- **API URL convention**: The `VITE_API_URL` (or equivalent) MUST point to the backend's **base URL only** (e.g., `http://localhost:8000`). Route prefixes like `/api/v1` are the backend's responsibility — do NOT duplicate them in env vars.
+- **CORS**: Backend `CORS_ORIGINS` MUST include both `localhost:<frontend-port>` AND the machine hostname pattern (e.g., `http://*.local:<frontend-port>`) for LAN access.
+- Map ports to host (use standard ports, document if changed).
+- Include a named volume for database persistence.
+- Add `.dockerignore` files to backend and frontend directories.
+
+#### 5.4 `.dockerignore` files
+
+Create `.dockerignore` in each service directory:
+
+- Exclude: `node_modules/`, `__pycache__/`, `.git/`, `.env`, `*.pyc`, `.venv/`, `dist/`, `build/`
+- Keep it minimal and relevant to the stack.
+
+---
+
+### 6. Generate pre-commit configuration
+
+Create `.pre-commit-config.yaml` at the project root.
+
+Rules:
+- Use the `pre-commit` framework (https://pre-commit.com).
+- Include hooks based on the confirmed stack from Step 2:
+
+**Always include:**
+- `trailing-whitespace`
+- `end-of-file-fixer`
+- `check-yaml`
+- `check-added-large-files`
+- `detect-private-key` (security baseline)
+
+**Backend (based on language):**
+- Python: `ruff` (linting + formatting), `mypy` (if type checking confirmed)
+- Node/TS: defer to frontend hooks
+- Other: ask the user for preferred linter
+
+**Frontend (based on framework):**
+- React/Vue/Angular with TypeScript: `eslint`, `prettier`
+- If a component library has specific lint rules, include them
+
+**Data:**
+- If SQL migrations exist: `sqlfluff` or equivalent (optional, ask user)
+
+Also create a brief section in the README (or a `CONTRIBUTING.md` note) explaining:
+- How to install: `pip install pre-commit && pre-commit install`
+- How to run manually: `pre-commit run --all-files`
+- That hooks run automatically on `git commit`
+
+---
+
+### 7. Report results
 
 Display a clear summary:
 
 - Which files were created
 - Which templates were used
 - The confirmed stack assumptions
+- Docker services configured
+- Pre-commit hooks configured
 
 ---
 
@@ -191,12 +278,16 @@ Display a clear summary:
 Created:
 - ai-specs/specs/backend-standards.mdc
 - ai-specs/specs/frontend-standards.mdc
+- docker-compose.yml
+- backend/Dockerfile (or Dockerfile)
+- frontend/Dockerfile (if applicable)
+- .pre-commit-config.yaml
 
 Templates used:
 - ai-specs/specs/templates/backend-standards-template.mdc
 - ai-specs/specs/templates/frontend-standards-template.mdc
 
-Stack configuration has been applied to both standards files.
+Stack configuration has been applied to all generated files.
 
 ---
 
