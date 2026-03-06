@@ -177,12 +177,20 @@ Only if `liveDesignEnabled == true` and Figma MCP is authenticated:
 
 For each referenced node:
 - Inspect the node via Figma MCP.
-- Retrieve best-effort structure:
+- Retrieve **both structure AND visual properties**:
   - Node name and type
   - Auto-layout direction (vertical/horizontal/none)
   - Item spacing and padding (if available)
   - Direct children in visual order
   - Component instances and variant info (if resolvable)
+  - **Fill colors** (background, foreground — hex + opacity)
+  - **Stroke/border colors** (hex + opacity + width)
+  - **Border radii** (per-corner if different)
+  - **Typography** (font family, font size, font weight, line-height, letter-spacing)
+  - **Text colors** (hex + opacity)
+  - **Drop shadows and inner shadows** (color, offset, blur, spread)
+  - **Opacity** (node-level)
+  - **Effects** (blur, layer blend modes if non-default)
 
 Build a **Design Snapshot** in-memory (do not write back to Figma/Notion by default):
 
@@ -192,8 +200,18 @@ Figma File: <...>
 Node: <...> (node-id=...)
 - Auto Layout: <...>
 - Spacing/Padding: <...>
+- Colors:
+  - Background: <hex> <opacity>
+  - Text: <hex> <opacity>
+  - Border/Stroke: <hex> <opacity> <width>
+- Typography:
+  - Font: <family> <weight> <size>/<line-height>
+  - Letter Spacing: <value>
+- Border Radius: <value or per-corner>
+- Shadows: <type> <color> <offset> <blur> <spread>
+- Opacity: <value>
 - Children (visual order):
-  - <child 1>
+  - <child 1> (repeat color/typo/radius for each child with distinct styles)
   - <child 2>
   - <child 3>
 - Components/Variants:
@@ -273,6 +291,8 @@ If `scope.frontend == true` AND the task is frontend-related:
   - Use the Design Snapshot as the primary source of truth.
   - Do not approximate layout from prose if it conflicts with the snapshot.
   - Mirror the Figma hierarchy when composing components (avoid flattening).
+  - **Apply design tokens from the snapshot**: colors, typography, border radii, shadows, and opacity MUST be reflected in the implementation (CSS variables, theme tokens, or inline styles — matching `uiFramework` conventions).
+  - Do NOT use generic/placeholder colors (e.g., `#f8f9fa`, Bootstrap defaults) when the snapshot provides specific values.
 - If `design-linked == false`:
   - Implement an AI-designed UI guided by frontend standards.
   - Keep it minimal, consistent, and accessible.
@@ -378,6 +398,7 @@ Design guardrails:
 - Live Design Mode is enabled ONLY when `scope.frontend == true` AND `design-linked == true`.
 - If Live Design Mode is ON, do not implement frontend UI tasks without at least one node-id URL.
 - Prefer the Design Snapshot over prose when implementing UI.
+- **Design tokens (colors, typography, radii, shadows) from the snapshot are MANDATORY** — never fall back to framework defaults or generic palettes when the snapshot provides specific values.
 - Never modify Figma.
 - Do not write snapshot back to Notion unless explicitly requested.
 
