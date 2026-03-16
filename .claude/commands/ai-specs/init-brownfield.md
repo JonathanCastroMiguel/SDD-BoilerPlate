@@ -197,15 +197,88 @@ Create: `ai-specs/specs/frontend-standards.mdc`
 
 Same rules as backend: document existing reality, flag inconsistencies as PROPOSED.
 
-### 2.3 Generate/update supporting documentation
+### 2.3 Generate data model documentation (MANDATORY)
 
-If these files don't exist, generate them from codebase analysis:
+Create: `ai-specs/specs/data-model.md`
 
-- `ai-specs/specs/data-model.md` — Document existing models/entities/schemas
-- `ai-specs/specs/api-spec.yml` — Generate from existing routes (or adopt existing OpenAPI spec if found)
-- `ai-specs/specs/development_guide.md` — Setup, workflows, deployment based on existing scripts/CI
+Use the template at `ai-specs/specs/templates/data-model-template.md` for STRUCTURE ONLY.
 
-If any of these already exist in the project (e.g., an existing OpenAPI spec), **adopt and reference them** rather than generating from scratch. Ask the user if they want to keep the existing location or copy into ai-specs/specs/.
+Process:
+1. **Scan all model/entity/schema definitions** in the codebase:
+   - ORM models (Prisma schema, TypeORM entities, Sequelize models, Mongoose schemas, Drizzle schemas, etc.)
+   - Database migration files (to understand field types, constraints, indexes)
+   - If no ORM: raw SQL schema files, or infer from code that interacts with the DB
+2. **For each entity/model, document:**
+   - Name and purpose
+   - All fields with types, constraints, and validation rules
+   - Primary keys, foreign keys, unique constraints, indexes
+   - Relationships (one-to-many, many-to-many, etc.)
+3. **Generate an Entity Relationship Diagram** in Mermaid format showing all entities and their relationships
+4. **Document key design principles** observed in the data layer (normalization level, soft deletes, timestamps, audit fields, etc.)
+
+Rules:
+- Be exhaustive — every model in the codebase must appear in this document
+- Use the actual field names, types, and constraints from the code
+- If validation rules exist (Zod schemas, class-validator decorators, Joi schemas, etc.), include them
+- If a model has no clear purpose from naming alone, inspect its usage in services/controllers to describe it
+
+### 2.4 Generate API specification (MANDATORY)
+
+Create: `ai-specs/specs/api-spec.yml`
+
+Process:
+1. **Check if an OpenAPI/Swagger spec already exists** in the project (common locations: `docs/`, `swagger/`, root, `api/`)
+   - If found and up-to-date: adopt it — copy or symlink into `ai-specs/specs/api-spec.yml`
+   - If found but outdated: use as starting point, update by scanning routes
+   - If not found: generate from scratch
+2. **Scan all route/endpoint definitions:**
+   - Express routes (`router.get/post/put/delete/patch`)
+   - NestJS controllers and decorators
+   - FastAPI/Flask/Django URL patterns
+   - GraphQL resolvers and schema definitions
+   - Any route registration pattern in the codebase
+3. **For each endpoint, document:**
+   - HTTP method and path
+   - Request parameters (path, query, body) with types
+   - Request body schema (derive from validation schemas if available)
+   - Response schema and status codes (derive from controller return types and error handlers)
+   - Authentication requirements (which middleware/guards are applied)
+   - Rate limiting or other middleware
+4. **Output as valid OpenAPI 3.x YAML**
+
+Rules:
+- Every route in the codebase must be documented
+- Derive schemas from actual validation/DTO definitions when possible
+- If response types are unclear, mark with `# TODO: verify response schema`
+- Include authentication schemes (Bearer, API key, session, etc.)
+- Include error response formats (derive from error handling middleware)
+
+### 2.5 Generate development guide (MANDATORY)
+
+Create: `ai-specs/specs/development_guide.md`
+
+Use the template at `ai-specs/specs/templates/development_guide-template.md` for STRUCTURE ONLY.
+
+Process:
+1. **Scan for setup/run instructions** — README, Makefile, docker-compose, package.json scripts, Procfile
+2. **Document:**
+   - Prerequisites (Node version, Docker, environment variables from .env.example)
+   - How to install dependencies
+   - How to run the project locally (dev mode)
+   - How to run tests
+   - How to run migrations
+   - How to build for production
+   - CI/CD pipeline overview (from .github/workflows or equivalent)
+   - Deployment process (if detectable)
+   - Environment variables (name and purpose, never actual values)
+
+### 2.6 Adopt existing documentation
+
+If any of the above files already exist in the project at non-standard locations (e.g., an OpenAPI spec at `docs/openapi.yaml`, or a data model doc in `docs/`):
+
+- Ask the user: "I found existing documentation at `<path>`. Do you want me to adopt it into `ai-specs/specs/` or generate fresh from the codebase?"
+- If adopting: copy into `ai-specs/specs/` and verify completeness against actual code
+- If generating fresh: use the existing doc as reference but scan the codebase for accuracy
 
 ---
 
@@ -294,8 +367,9 @@ Run a quick checklist:
 
 - [ ] `ai-specs/specs/backend-standards.mdc` exists and has content
 - [ ] `ai-specs/specs/frontend-standards.mdc` exists and has content
-- [ ] `ai-specs/specs/data-model.md` exists
-- [ ] `ai-specs/specs/api-spec.yml` exists
+- [ ] `ai-specs/specs/data-model.md` exists and documents all models
+- [ ] `ai-specs/specs/api-spec.yml` exists and documents all endpoints
+- [ ] `ai-specs/specs/development_guide.md` exists
 - [ ] `openspec/specs/` has at least one capability spec
 - [ ] `openspec/config.yaml` has project context
 
@@ -309,9 +383,9 @@ Display a final summary:
 ### Technical Baseline (ai-specs/specs/)
 - ✓ backend-standards.mdc (from detected Express/TypeScript stack)
 - ✓ frontend-standards.mdc (from detected React/Vite stack)
-- ✓ data-model.md (4 models documented)
-- ✓ api-spec.yml (23 endpoints documented)
-- ✓ development_guide.md (setup + CI documented)
+- ✓ data-model.md (12 models, 85 fields, ER diagram)
+- ✓ api-spec.yml (23 endpoints, OpenAPI 3.x, auth schemes documented)
+- ✓ development_guide.md (setup, scripts, CI/CD, env vars documented)
 
 ### Functional Baseline (openspec/specs/)
 - ✓ auth/spec.md (4 requirements, 8 scenarios)
