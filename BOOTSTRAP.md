@@ -1,9 +1,9 @@
 # 🚀 BOOTSTRAP GUIDE
 
-## Using This Repository as a Greenfield Template
+## Using This Repository
 
 This repository is designed to be reused as a **governed development
-starter kit**.
+starter kit** — for both **new (greenfield)** and **existing (brownfield)** projects.
 
 It provides:
 
@@ -121,7 +121,9 @@ If these files do not exist:
 -   `ai-specs/specs/backend-standards.mdc`
 -   `ai-specs/specs/frontend-standards.mdc`
 
-Run:
+Choose the appropriate initialization command:
+
+## 6a. Greenfield (new project, no existing code)
 
 ```bash
 /ai-specs:init-greenfield
@@ -138,6 +140,23 @@ You will be prompted for:
 -   Tooling & CI strategy
 
 This generates deterministic, stack-specific standards.
+
+## 6b. Brownfield (existing codebase)
+
+```bash
+/ai-specs:init-brownfield
+```
+
+This command will:
+
+1. **Discover** — Auto-detect stack, architecture, and modules from existing code
+2. **Normalize** — Generate technical standards that reflect reality (`ai-specs/specs/*`)
+3. **Baseline** — Capture existing capabilities as functional specs (`openspec/specs/*`)
+4. **Prepare** — Leave the project ready for incremental SDD changes
+
+No source code is modified. Only documentation and spec files are generated.
+
+---
 
 Without this step, development is blocked by design.
 

@@ -55,13 +55,12 @@ STOP immediately. Do not continue implementation.
 
 Standards must contain stack-specific content. If a standards file is missing OR effectively empty (e.g., only frontmatter/headings/placeholders with no concrete stack rules), treat it as invalid.
 
-Instruct the user to run:
+Instruct the user to run the appropriate initialization command:
 
-`/ai-specs:init-greenfield`
+- **New project (no existing code):** `/ai-specs:init-greenfield`
+- **Existing codebase:** `/ai-specs:init-brownfield`
 
-to generate (or regenerate) definitive standards from templates.
-
-Do not guess stack details. Always collect them via init-greenfield.
+Do not guess stack details. Always collect them via the init command.
 
 ## 5. Documentation Enforcement
 
