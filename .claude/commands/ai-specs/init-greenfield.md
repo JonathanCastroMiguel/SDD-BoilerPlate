@@ -1,6 +1,6 @@
 ---
-name: "ai-specs: Init Standards"
-description: Generate definitive backend and frontend standards from templates using the project's tech stack
+name: "ai-specs: Init Greenfield"
+description: Generate definitive backend and frontend standards from templates for a new (greenfield) project
 category: Workflow
 tags: [standards, templates, bootstrap]
 ---

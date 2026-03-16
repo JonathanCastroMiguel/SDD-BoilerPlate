@@ -394,7 +394,7 @@ After all tasks are marked complete, run an automated smoke test if Docker infra
 Look for `docker-compose.yml` (or `docker-compose.yaml`, `compose.yml`) at the project root.
 
 - If found: proceed to 8.2.
-- If not found: skip this step, warn that no Docker infrastructure exists for integration validation, and suggest running `/ai-specs:init-standards` to generate it.
+- If not found: skip this step, warn that no Docker infrastructure exists for integration validation, and suggest running `/ai-specs:init-greenfield` to generate it.
 
 #### 8.2 Build and start the stack
 

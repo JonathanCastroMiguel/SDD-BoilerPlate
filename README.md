@@ -87,7 +87,7 @@ These commands manage the change lifecycle only.
 
 These commands manage standards, documentation, planning, and execution.
 
--   /ai-specs:init-standards\
+-   /ai-specs:init-greenfield\
     Generate backend and frontend standards from templates using your
     tech stack.
 
@@ -132,7 +132,7 @@ Standards may initially be empty in greenfield setups.
 
 If backend-standards.mdc or frontend-standards.mdc do not exist, run:
 
-/ai-specs:init-standards
+/ai-specs:init-greenfield
 
 This generates deterministic, stack‑specific standards from templates.
 
@@ -163,7 +163,7 @@ Templates prevent:
 
 2.  Initialize standards
 
-    /ai-specs:init-standards
+    /ai-specs:init-greenfield
 
     Provide:
 

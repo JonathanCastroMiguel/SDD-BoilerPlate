@@ -57,11 +57,11 @@ Standards must contain stack-specific content. If a standards file is missing OR
 
 Instruct the user to run:
 
-`/ai-specs:init-standards`
+`/ai-specs:init-greenfield`
 
 to generate (or regenerate) definitive standards from templates.
 
-Do not guess stack details. Always collect them via init-standards.
+Do not guess stack details. Always collect them via init-greenfield.
 
 ## 5. Documentation Enforcement
 

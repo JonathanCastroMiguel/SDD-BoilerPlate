@@ -124,7 +124,7 @@ If these files do not exist:
 Run:
 
 ```bash
-/ai-specs:init-standards
+/ai-specs:init-greenfield
 ```
 
 You will be prompted for:
@@ -218,7 +218,7 @@ When everything passes validation:
 Versión mermaid
 ```mermaid
 flowchart TD
-  A[Init Standards<br/>/ai-specs:init-standards] --> B{Using Notion MCP?}
+  A[Init Standards<br/>/ai-specs:init-greenfield] --> B{Using Notion MCP?}
   B -- Yes --> C[/ai-specs:new-us<br/>(calls enrich-us)/]
   B -- No --> D[Create US manually<br/>using .md in Draft folder]
 
