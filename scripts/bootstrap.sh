@@ -70,9 +70,9 @@ else
   echo "⚠️  OpenSpec CLI is NOT installed."
   echo
   echo "Install it using your preferred method:"
-  echo "  npm install -g openspec"
+  echo "  npm install -g @fission-ai/openspec@latest"
   echo "  or"
-  echo "  pnpm add -g openspec"
+  echo "  pnpm add -g @fission-ai/openspec@latest"
   echo
 fi
 
